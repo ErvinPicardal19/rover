@@ -77,8 +77,6 @@ void receiveEvent(int howMany)
     byte tmp = Wire.read();
     char dir = tmp;
     Serial.println(dir);   
-    delay(100);
-
   if(dir == 'u'){
     Serial.println("Going Up");
     forward();
@@ -130,7 +128,6 @@ void changeClaw(int newAngle){
 
 
 void loop(){
-  delay(100);
 }
 
 void forward(){

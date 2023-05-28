@@ -1,8 +1,8 @@
 #include <SocketIoClient.h>
-#include <ArduinoJson.h>
 #include <Arduino.h>
 #include <ESP8266WiFi.h>
 #include <Wire.h>
+#include <NewPing.h>
 
 #include "creds/creds.h"
 
@@ -32,10 +32,30 @@ void setup(){
 	webSocket.on("claw_change", CLAW_ANGLE);
 }
 
-
+unsigned long currentMillis = millis();
 
 void loop(){
-	webSocket.loop();
+
+	if(millis() - currentMillis > 500) {
+		Wire.requestFrom(6, 1);    // request 6 bytes from peripheral device #8
+
+		while (Wire.available()) { // peripheral may send less than requested
+			char c = Wire.read(); // receive a byte as character
+			//  Serial.print(c);       // print the character
+			if(c == 's'){
+				USER_SERIAL.println("Stopping...");
+				Wire.beginTransmission(4);
+				Wire.write("control");
+				Wire.write("s");
+				Wire.endTransmission();
+			}
+		}
+
+		currentMillis = millis();
+	}
+  
+
+  webSocket.loop();
 }
 
 void handleData(const char* message, size_t length){
@@ -92,7 +112,7 @@ void GO_UP_COMMAND(const char* payload, size_t length) {
 	Wire.write("control");
 	Wire.write("u");
 	Wire.endTransmission();
-	delay(100);
+
 }
 
 void GO_LEFT_COMMAND(const char* payload, size_t length) {
@@ -102,7 +122,7 @@ void GO_LEFT_COMMAND(const char* payload, size_t length) {
 	Wire.write("control");
 	Wire.write("l");
 	Wire.endTransmission();
-	delay(100);
+
 }
 void GO_RIGHT_COMMAND(const char* payload, size_t length) {
 	
@@ -111,7 +131,7 @@ void GO_RIGHT_COMMAND(const char* payload, size_t length) {
 	Wire.write("control");
 	Wire.write("r");
 	Wire.endTransmission();
-	delay(100);
+
 }
 void GO_DOWN_COMMAND(const char* payload, size_t length) {
 	
@@ -120,7 +140,7 @@ void GO_DOWN_COMMAND(const char* payload, size_t length) {
 	Wire.write("control");
 	Wire.write("d");
 	Wire.endTransmission();
-	delay(100);
+
 }
 
 void STOP(const char* payload, size_t length) {
@@ -130,7 +150,7 @@ void STOP(const char* payload, size_t length) {
 	Wire.write("control");
 	Wire.write("s");
 	Wire.endTransmission();
-	delay(100);
+
 }
 
 void CHANGE_SPEED(const char* payload, size_t length) {
@@ -140,7 +160,7 @@ void CHANGE_SPEED(const char* payload, size_t length) {
 	Wire.write("speed");
 	Wire.write(val);
 	Wire.endTransmission();
-	delay(100);
+
 	// send_to_slave(payload);
 }
 
@@ -151,7 +171,7 @@ void CLAW_ANGLE(const char* payload, size_t length) {
 	Wire.write("claw");
 	Wire.write(val);
 	Wire.endTransmission();
-	delay(100);
+
 	// send_to_slave(payload);
 }
 
@@ -160,5 +180,5 @@ void send_to_slave(const char* topic, byte data){
 	Wire.write(topic);
 	Wire.write(data);
 	Wire.endTransmission();
-	delay(100);
+
 }
