@@ -4,6 +4,7 @@
 import React, {useEffect, useState} from 'react';
 import {View, StyleSheet, Modal, TextInput, Text, TouchableOpacity} from 'react-native';
 import {Slider} from '@miblanchard/react-native-slider';
+import SwitchSelector from 'react-native-switch-selector';
 
 import socketServices from '../utils/socketServices';
 
@@ -16,6 +17,7 @@ const ServerController = (props) => {
   //  const [isConnected, setIsConnected] = useState(false);
    const [value, setValue] = useState(0);
    const [lastVal, setLastVal] = useState(0);
+
 
    const validateIP = (value) => {
       var re = /^((25[0-5]|(2[0-4]|1[0-9]|[1-9]|)[0-9])(\.(?!$)|$)){4}$/;
@@ -33,6 +35,11 @@ const ServerController = (props) => {
     const setSpeedHandler = (val) => {
       socketServices.emit('speed_change', value);
     };
+
+    const sonarSwitch = (value) => {
+      console.log(`Call onPress with value: ${value}`);
+      socketServices.emit('sonar', value);
+   };
 
    const handleServerConnect = async() => {
       const SOCKET_URL = `http://${ip}:5000`;
@@ -122,8 +129,24 @@ const ServerController = (props) => {
                   <Text style={{color: '#FCFAFA'}}>SET</Text>
                </TouchableOpacity>
               </View>
+              <View style={{backgroundColor: '#8D99AE', padding: 10, borderRadius: 15, marginTop: 15}}>
+                <Text style={styles.text2}>SONAR:</Text>
+                <SwitchSelector
+                disabled={(isConnected) ? false : true}
+                style={{marginTop: 5}}
+                  initial={0}
+                  onPress={value => sonarSwitch(value)}
+                  textColor={'#8D99AE'}
+                  selectedColor={'#fff'}
+                  options={[
+                    { label: 'On', value: '1', activeColor: 'green'}, //images.feminino = require('./path_to/assets/img/feminino.png')
+                    { label: 'Off', value: '0', activeColor: 'red'}, //images.masculino = require('./path_to/assets/img/masculino.png')
+                  ]}
+                  testID="gender-switch-selector"
+                  accessibilityLabel="gender-switch-selector"
+                />
+              </View>
             </View>
-
          </View>
       </View>
    );

@@ -62,6 +62,11 @@ io.on('connect', (socket) => {
       io.to(roverId).emit('speed_change', val);
    });
 
+   socket.on('sonar', (val) => {
+      console.log("Sonar Mode: ", val);
+      io.to(roverId).emit('sonar', val);
+   });
+
    socket.on('disconnect',  () => {
        console.log(`user ${socket.id} disconnected`);
    });

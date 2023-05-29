@@ -9,6 +9,9 @@
 #define USER_SERIAL Serial
 #define SPEED_PIN 14
 
+byte sonar_mode = 0;
+byte stop_flag = 0;
+
 SocketIoClient webSocket;
 
 void setup(){
@@ -30,28 +33,34 @@ void setup(){
 	webSocket.on("stop", STOP);
 	webSocket.on("speed_change", CHANGE_SPEED);
 	webSocket.on("claw_change", CLAW_ANGLE);
+	webSocket.on("sonar", SONAR_MODE);
 }
 
 unsigned long currentMillis = millis();
 
 void loop(){
 
-	if(millis() - currentMillis > 500) {
-		Wire.requestFrom(6, 1);    // request 6 bytes from peripheral device #8
+	if(sonar_mode == 1) {
+		if(millis() - currentMillis > 100) {
+				Wire.requestFrom(6, 1);    // request 6 bytes from peripheral device #8
 
-		while (Wire.available()) { // peripheral may send less than requested
-			char c = Wire.read(); // receive a byte as character
-			//  Serial.print(c);       // print the character
-			if(c == 's'){
-				USER_SERIAL.println("Stopping...");
-				Wire.beginTransmission(4);
-				Wire.write("control");
-				Wire.write("s");
-				Wire.endTransmission();
+				while (Wire.available()) { // peripheral may send less than requested
+					char c = Wire.read(); // receive a byte as character
+					//  Serial.print(c);       // print the character
+					if(c == 's' && stop_flag == 0){
+						USER_SERIAL.println("Stopping...");
+						Wire.beginTransmission(4);
+						Wire.write("control");
+						Wire.write("s");
+						Wire.endTransmission();
+						stop_flag = 1;
+					} else if(c == 'g') {
+						stop_flag = 0;
+					}
+				}
+
+				currentMillis = millis();
 			}
-		}
-
-		currentMillis = millis();
 	}
   
 
@@ -106,40 +115,37 @@ void SEND_INFO(const char* payload, size_t length) {
 }
 
 void GO_UP_COMMAND(const char* payload, size_t length) {
-	
-	USER_SERIAL.println("GOING UP!");
-	Wire.beginTransmission(4);
-	Wire.write("control");
-	Wire.write("u");
-	Wire.endTransmission();
+	if(stop_flag == 0 || sonar_mode == 0) {
+		USER_SERIAL.println("GOING UP!");
+		Wire.beginTransmission(4);
+		Wire.write("control");
+		Wire.write("u");
+		Wire.endTransmission();
+	}
 
 }
 
 void GO_LEFT_COMMAND(const char* payload, size_t length) {
-	
-	USER_SERIAL.println("GOING LEFT!");
-	Wire.beginTransmission(4);
-	Wire.write("control");
-	Wire.write("l");
-	Wire.endTransmission();
-
+		USER_SERIAL.println("GOING LEFT!");
+		Wire.beginTransmission(4);
+		Wire.write("control");
+		Wire.write("l");
+		Wire.endTransmission();
 }
 void GO_RIGHT_COMMAND(const char* payload, size_t length) {
-	
-	USER_SERIAL.println("r");
-	Wire.beginTransmission(4);
-	Wire.write("control");
-	Wire.write("r");
-	Wire.endTransmission();
-
+		USER_SERIAL.println("r");
+		Wire.beginTransmission(4);
+		Wire.write("control");
+		Wire.write("r");
+		Wire.endTransmission();
 }
 void GO_DOWN_COMMAND(const char* payload, size_t length) {
-	
-	USER_SERIAL.println("d");
-	Wire.beginTransmission(4);
-	Wire.write("control");
-	Wire.write("d");
-	Wire.endTransmission();
+
+		USER_SERIAL.println("d");
+		Wire.beginTransmission(4);
+		Wire.write("control");
+		Wire.write("d");
+		Wire.endTransmission();
 
 }
 
@@ -173,6 +179,11 @@ void CLAW_ANGLE(const char* payload, size_t length) {
 	Wire.endTransmission();
 
 	// send_to_slave(payload);
+}
+
+void SONAR_MODE(const char* payload, size_t length) {
+	Serial.println(payload);
+   sonar_mode = String(payload).toInt();
 }
 
 void send_to_slave(const char* topic, byte data){
